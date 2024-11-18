@@ -1,6 +1,3 @@
-Here’s a sample README file for your project on **Test Doubles concepts**. This README includes an overview of test doubles, their types, examples, and how to use them in a project.
-
----
 
 # 📘 Test Doubles in Unit Testing
 
