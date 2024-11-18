@@ -1,79 +1,147 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-# Getting Started
+# 📘 Test Doubles in Unit Testing
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+## 📝 Introduction
+Test doubles are objects that **mimic the behavior** of real objects in controlled ways. They are used in unit testing to **isolate** the unit under test, allowing you to focus on testing specific components without relying on external systems.
 
-## Step 1: Start the Metro Server
+Test doubles are essential for creating **reliable** and **repeatable** tests, especially when dealing with dependencies such as APIs, databases, or other services.
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+## 🛠️ Types of Test Doubles
+There are **5 main types** of test doubles:
 
-To start Metro, run the following command from the _root_ of your React Native project:
+### 1. **Dummy**
+A **dummy** object is created but **not used** in the test. It only satisfies method signatures.
 
-```bash
-# using npm
-npm start
-
-# OR using Yarn
-yarn start
+#### Example
+```typescript
+class DummyUser {
+  constructor(public id: number, public name: string) {}
+}
 ```
 
-## Step 2: Start your Application
+In this example, `DummyUser` is passed only to fulfill the parameter requirement without being used in the test logic.
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
+### 2. **Fake**
+A **fake** object has a working implementation but is simpler than the real object. It often uses an in-memory database or a mock service.
 
-### For Android
+#### Example
+```typescript
+class FakeDatabase {
+  private data: Record<string, string> = {};
 
-```bash
-# using npm
-npm run android
+  save(key: string, value: string) {
+    this.data[key] = value;
+  }
 
-# OR using Yarn
-yarn android
+  get(key: string) {
+    return this.data[key];
+  }
+}
 ```
 
-### For iOS
+In this example, `FakeDatabase` mimics a real database but stores data in memory.
 
-```bash
-# using npm
-npm run ios
+### 3. **Stub**
+A **stub** provides pre-defined responses to method calls. It does not have real behavior but is used to control the test flow.
 
-# OR using Yarn
-yarn ios
+#### Example
+```typescript
+const userApiStub = {
+  getUser: jest.fn().mockReturnValue({ id: 1, name: "John Doe" }),
+};
 ```
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+In this example, `userApiStub` always returns a static user object when `getUser` is called.
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+### 4. **Spy**
+A **spy** records the interactions with the object. It tracks method calls, arguments, and even the number of times a method was called.
 
-## Step 3: Modifying your App
+#### Example
+```typescript
+const loggerSpy = jest.spyOn(console, 'log');
 
-Now that you have successfully run the app, let's modify it.
+myFunction();
+expect(loggerSpy).toHaveBeenCalledWith("Hello World");
+```
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+In this example, `loggerSpy` tracks the `console.log` calls.
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+### 5. **Mock**
+A **mock** is a fully controlled object with expectations set before the test is run. It verifies the behavior of the test subject by checking if methods were called as expected.
 
-## Congratulations! :tada:
+#### Example
+```typescript
+const apiMock = {
+  fetchData: jest.fn(),
+};
 
-You've successfully run and modified your React Native App. :partying_face:
+apiMock.fetchData();
+expect(apiMock.fetchData).toHaveBeenCalledTimes(1);
+```
 
-### Now what?
+In this example, `apiMock` verifies that the `fetchData` method was called once.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
+## 💡 When to Use Each Test Double
+| Type   | Use Case                                           |
+|--------|----------------------------------------------------|
+| Dummy  | When an object is required but not used in the test |
+| Fake   | When a lightweight implementation is sufficient     |
+| Stub   | When you need specific responses for testing        |
+| Spy    | When you want to verify method calls and arguments  |
+| Mock   | When you need full control over object behavior     |
 
-# Troubleshooting
+## 🔍 How to Implement Test Doubles in Your Project
+### Using Jest (JavaScript/TypeScript)
+Jest is a powerful testing library that provides built-in support for creating test doubles like mocks, stubs, and spies.
 
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+#### Example
+```typescript
+// myService.ts
+export class MyService {
+  constructor(private api: any) {}
 
-# Learn More
+  async getData() {
+    const response = await this.api.fetchData();
+    return response.data;
+  }
+}
 
-To learn more about React Native, take a look at the following resources:
+// myService.test.ts
+import { MyService } from './myService';
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+const apiMock = {
+  fetchData: jest.fn().mockResolvedValue({ data: "test data" }),
+};
+
+test("getData returns the correct data", async () => {
+  const service = new MyService(apiMock);
+  const result = await service.getData();
+  expect(result).toBe("test data");
+  expect(apiMock.fetchData).toHaveBeenCalled();
+});
+```
+
+## 🚀 Running the Tests
+To run the tests, use the following command:
+
+```bash
+npm test
+```
+
+Ensure you have Jest installed in your project:
+
+```bash
+npm install jest --save-dev
+```
+
+## 📚 References
+- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [Test Double Patterns](https://martinfowler.com/bliki/TestDouble.html)
+- [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html)
+
+## 🛠️ Contributing
+If you would like to contribute, please fork the repository and submit a pull request. We welcome all improvements and suggestions!
+
+## 📄 License
+This project is licensed under the MIT License.
+
